@@ -140,9 +140,10 @@ function officeToText(buffer: Buffer): string {
 }
 
 async function pdfToText(buffer: Buffer): Promise<string> {
-  const { extractText, getDocumentProxy } = await import('unpdf');
-  const document = await getDocumentProxy(new Uint8Array(buffer));
-  const { text } = await extractText(document, { mergePages: true });
+  const { extractText } = await import('unpdf');
+  // Passing bytes lets unpdf own and destroy its PDF worker/document, even
+  // when extraction fails. Caller-created proxies must be destroyed manually.
+  const { text } = await extractText(new Uint8Array(buffer), { mergePages: true });
   return clamp(Array.isArray(text) ? text.join(' ') : text);
 }
 

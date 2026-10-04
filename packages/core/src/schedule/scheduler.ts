@@ -73,6 +73,10 @@ export class Scheduler extends EventEmitter {
 
     try {
       for (const overview of this.options.app.overview()) {
+        if (overview.running) {
+          logger.info('Scheduled run skipped for an account already backing up');
+          continue;
+        }
         const account = overview.account;
         if (account.selectedFolders.length === 0 && !account.settings.autoSelectNewFolders) {
           logger.info(`Skipping ${account.name}: no folders selected`);

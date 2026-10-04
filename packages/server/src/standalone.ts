@@ -101,6 +101,18 @@ async function main(): Promise<void> {
       scheduler.start();
       // MQTT and the Home Assistant integration both report the next run.
       app.setSchedule(expression, () => scheduler?.nextRun ?? null);
+      // Catch up after a host/container restart instead of waiting up to an
+      // hour. Uses the same application path and stored account configuration
+      // as scheduled jobs; no credential handling is exposed to an operator.
+      if (process.env.AMBERCHEST_RUN_ON_STARTUP === 'true') {
+        void (async () => {
+          for (const entry of app.overview()) {
+            if (entry.running || (entry.account.selectedFolders.length === 0 && !entry.account.settings.autoSelectNewFolders)) continue;
+            logger.info(`Startup backup for ${entry.account.name}`);
+            await app.startSyncAndIndex(entry.account.id);
+          }
+        })().catch((error: Error) => logger.error(`Startup backup failed: ${error.message}`));
+      }
     }
   }
 

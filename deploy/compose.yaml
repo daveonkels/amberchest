@@ -37,6 +37,7 @@ services:
       AMBERCHEST_MASTER_PASSWORD_FILE: /run/secrets/master-password
       AMBERCHEST_UI_PASSWORD_FILE: /run/secrets/ui-password
       AMBERCHEST_CRON: '17 * * * *'
+      AMBERCHEST_RUN_ON_STARTUP: 'true'
     labels:
       traefik.enable: 'true'
       traefik.docker.network: amberchest-private

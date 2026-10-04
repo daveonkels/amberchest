@@ -42,7 +42,7 @@ Create a Cloudflare DNS-only A record to the Docker host's Tailscale IP, with Tr
 
 Check container logs and health, anonymous API rejection, HTTPS via the host route, genuine Fastmail certificate validation through the relay, blocked other destinations and DNS, UID/mount permissions, SQLite snapshot integrity and scheduler startup. After account setup, select all desired folders (auto-select new folders is on), run the initial backup, run it again and verify no repeat downloads. Inspect an isolated EML copy and its digest without uploading mail back to Fastmail.
 
-Backups run hourly at minute 17, America/Chicago. Logging out leaves jobs active. Disabled integrations mean there are no outbound email/webhook alerts; consult the app's last-run status and host timer status. The daily seven-slot state snapshot supplements the EML archive, not independent NAS backups.
+Backups run hourly at minute 17, America/Chicago, and catch up automatically when the container starts. A scheduled tick skips accounts already backing up. Logging out leaves jobs active. Disabled integrations mean there are no outbound email/webhook alerts; consult the app's last-run status and host timer status. The daily seven-slot state snapshot supplements the EML archive, not independent NAS backups.
 
 ## Rollback
 

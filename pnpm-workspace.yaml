@@ -3,6 +3,8 @@ packages:
   - packages/server
   - packages/web
 linkWorkspacePackages: true
+injectWorkspacePackages: true
+syncInjectedDepsAfterScripts: [build]
 allowBuilds:
   better-sqlite3: true
   esbuild: true

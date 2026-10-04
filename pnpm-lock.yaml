@@ -3,6 +3,7 @@ lockfileVersion: '9.0'
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
+  injectWorkspacePackages: true
 
 overrides:
   nodemailer@10.0.1: 10.0.9
@@ -57,7 +58,7 @@ importers:
   packages/server:
     dependencies:
       '@amberchest/core':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../core
       '@fastify/static':
         specifier: ^10.1.3

@@ -3,6 +3,7 @@
 import {createRequire} from 'node:module';
 const Database=createRequire(import.meta.resolve('@amberchest/core'))('better-sqlite3');
 import {mkdir,copyFile,rename} from 'node:fs/promises';
+process.umask(0o077);
 const day=new Date().getUTCDay();
 const destination=`/archive/.amberchest-state/day-${day}`;
 await mkdir(destination,{recursive:true,mode:0o700});

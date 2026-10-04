@@ -135,7 +135,7 @@ export function App(): ReactNode {
           </button>
 
           <nav className="ml-auto flex gap-1 md:ml-0 md:flex-col">
-            {items.filter((item) => !['mcp', 'homeassistant'].includes(item.id)).map((item) => (
+            {items.filter((item) => !['mcp', 'homeassistant', 'discarded'].includes(item.id)).map((item) => (
               <button
                 key={item.id}
                 type="button"
@@ -166,7 +166,7 @@ export function App(): ReactNode {
 
             <Button variant="ghost" onClick={() => void lock()} className="w-full justify-start">
               <Lock size={15} />
-              <span className="hidden md:inline">{t('nav.lock')}</span>
+              <span className="hidden md:inline">Log out</span>
             </Button>
           </div>
         </aside>

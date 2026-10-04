@@ -1,8 +1,8 @@
 /** Public repository of this project. */
-export const REPO_URL = 'https://github.com/sphings79/amberchest';
+export const REPO_URL = 'https://github.com/daveonkels/amberchest';
 
 /** Deep link to the container setup section of the README. */
-export const DOCKER_DOCS_URL = `${REPO_URL}#docker`;
+export const DOCKER_DOCS_URL = `${REPO_URL}/blob/main/DEPLOYMENT.md`;
 
 /** Where the star button points. */
 export const STAR_URL = `${REPO_URL}/stargazers`;

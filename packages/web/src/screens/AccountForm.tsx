@@ -309,7 +309,7 @@ export function AccountForm({
               >
                 <option value="keep">{t('account.deletedKeep')}</option>
                 <option value="move-to-deleted">{t('account.deletedMove')}</option>
-                <option value="mirror">{t('account.deletedMirror')}</option>
+
               </Select>
             </Field>
 
@@ -319,6 +319,8 @@ export function AccountForm({
                   type="number"
                   min={1}
                   max={3650}
+                  readOnly
+                  placeholder="Kept indefinitely"
                   value={settings.deletedRetentionDays ?? ''}
                   onChange={(event) =>
                     setSettings({

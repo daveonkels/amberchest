@@ -148,7 +148,7 @@ export function GateScreen(): ReactNode {
         </Card>
 
         <div className="mt-4 flex justify-center">
-          <ConnectionSwitcher />
+          <span className="text-xs" style={{ color: 'var(--text-faint)' }}>Private Fastmail backup</span>
         </div>
       </div>
     </div>

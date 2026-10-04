@@ -1,6 +1,7 @@
 // SQLite's online backup API makes a consistent copy while the index is live.
 // Seven daily slots; raw EML files remain independently readable on the NAS.
-import Database from 'better-sqlite3';
+import {createRequire} from 'node:module';
+const Database=createRequire(import.meta.resolve('@amberchest/core'))('better-sqlite3');
 import {mkdir,copyFile,rename} from 'node:fs/promises';
 const day=new Date().getUTCDay();
 const destination=`/archive/.amberchest-state/day-${day}`;

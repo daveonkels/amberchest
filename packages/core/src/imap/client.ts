@@ -1,3 +1,4 @@
+import { assertFastmail } from '../privacy.js';
 import { ImapFlow } from 'imapflow';
 import type { Account, RemoteFolder } from '../types.js';
 import { messageFingerprint } from '../util/hash.js';
@@ -32,6 +33,7 @@ export function connectionOptionsFromAccount(account: Account): ImapConnectionOp
  * \Seen flag stays untouched.
  */
 export function createClient(options: ImapConnectionOptions): ImapFlow {
+  assertFastmail(options);
   return new ImapFlow({
     host: options.host,
     port: options.port,

@@ -59,7 +59,9 @@ export const chromiumPdfRenderer: PdfRenderer = async (html) => {
       [
         '--headless',
         '--disable-gpu',
-        '--no-sandbox',
+        '--disable-javascript',
+        '--disable-background-networking',
+        '--host-resolver-rules=MAP * ~NOTFOUND',
         // The message must not be able to reach the network while printing.
         '--disable-remote-fonts',
         '--no-pdf-header-footer',
@@ -109,15 +111,11 @@ export function messageToPrintableHtml(message: MessageContent, locale = 'de-DE'
         .join(', ')}</div>`
     : '';
 
-  const body = message.html
-    ? // Anything that would load from the network is removed for printing.
-      message.html
-        .replace(/<(script|iframe|object|embed)[^>]*>[\s\S]*?<\/\1>/gi, '')
-        .replace(/\s(src|background)\s*=\s*["']https?:\/\/[^"']*["']/gi, '')
-    : `<pre>${escapeHtml(message.text ?? '')}</pre>`;
+  const body = `<pre>${escapeHtml(message.text ?? 'This message has no plain-text part. Export its EML to view the original.')}</pre>`;
 
   return `<!doctype html>
 <html lang="de"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
 <title>${escapeHtml(message.subject ?? 'Nachricht')}</title>
 <style>
   @page { margin: 18mm 16mm; }

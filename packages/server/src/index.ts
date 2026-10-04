@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import fastifyStatic from '@fastify/static';
 import websocket from '@fastify/websocket';
+import { privateBackup } from '@amberchest/core';
 import type { AmberChestApp } from '@amberchest/core';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { isIngressAddress } from './addon.js';
@@ -29,8 +30,8 @@ export interface RunningServer {
 export async function createServer(options: ServerOptions): Promise<FastifyInstance> {
   const server = Fastify({
     logger: false,
-    // Behind a reverse proxy the real client address comes from headers.
-    trustProxy: true,
+    // Do not trust client-supplied forwarding headers.
+    trustProxy: false,
     // A transferred message file is the largest body this ever sees.
     bodyLimit: 128 * 1024 * 1024,
   });
@@ -64,26 +65,33 @@ export async function createServer(options: ServerOptions): Promise<FastifyInsta
     });
   }
 
-  /*
-   * Cross origin access for the remote mode.
-   *
-   * Authentication is a bearer token, never a cookie, so a foreign page cannot
-   * ride along on an existing session - which is what CORS with credentials
-   * would risk. Allowing any origin is therefore safe here: without the token
-   * every request is rejected anyway.
-   */
+  const loginAttempts = new Map<string, { count: number; until: number }>();
   server.addHook('onRequest', async (request, reply) => {
+    reply.header('referrer-policy', 'no-referrer');
+    reply.header('x-content-type-options', 'nosniff');
+    reply.header('x-frame-options', 'DENY');
+    reply.header('cache-control', 'no-store');
+    if (!privateBackup()) return;
+    reply.header('content-security-policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'");
     const origin = request.headers.origin;
-    if (!origin) return;
-
-    reply.header('access-control-allow-origin', origin);
-    reply.header('vary', 'Origin');
-    reply.header('access-control-allow-headers', 'authorization, content-type');
-    reply.header('access-control-allow-methods', 'GET, POST, PATCH, PUT, DELETE, OPTIONS');
-    reply.header('access-control-max-age', '600');
-
-    if (request.method === 'OPTIONS') {
-      await reply.status(204).send();
+    if (origin && origin !== process.env.AMBERCHEST_PUBLIC_ORIGIN) {
+      return reply.status(403).send({ error: 'Cross-origin access is disabled' });
+    }
+    const path = request.url.split('?')[0] ?? '';
+    if (path === '/mcp' || /\/(oauth|transfer|notifications|mqtt|restore|discard)(\/|$)/.test(path) ||
+        path.endsWith('/archive/file') || path.startsWith('/api/archive/migration') ||
+        request.method === 'DELETE') {
+      return reply.status(403).send({ error: 'This feature is disabled on the private backup server' });
+    }
+    if (path === '/api/login' || path === '/api/unlock' || path === '/api/setup') {
+      const now = Date.now();
+      for (const [key, value] of loginAttempts) if (value.until <= now) loginAttempts.delete(key);
+      // The reverse proxy is intentionally treated as one source. This gives
+      // a conservative global limit without trusting spoofable forwarding headers.
+      const key = request.ip;
+      const entry = loginAttempts.get(key) ?? { count: 0, until: now + 60_000 };
+      if (++entry.count > 10) return reply.status(429).header('retry-after', '60').send({ error: 'Try again in a minute' });
+      loginAttempts.set(key, entry);
     }
   });
 

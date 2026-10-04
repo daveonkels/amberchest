@@ -75,6 +75,7 @@ function xmlToText(xml: string): string {
  */
 function readZipEntries(buffer: Buffer, wanted: (name: string) => boolean): string[] {
   const results: string[] = [];
+  let total = 0;
 
   // End of central directory record, searched from the back.
   let eocd = -1;
@@ -89,7 +90,7 @@ function readZipEntries(buffer: Buffer, wanted: (name: string) => boolean): stri
   const entryCount = buffer.readUInt16LE(eocd + 10);
   let offset = buffer.readUInt32LE(eocd + 16);
 
-  for (let entry = 0; entry < entryCount; entry += 1) {
+  for (let entry = 0; entry < Math.min(entryCount, ARCHIVE_LIMITS.maxEntries); entry += 1) {
     if (offset + 46 > buffer.length || buffer.readUInt32LE(offset) !== 0x02014b50) break;
 
     const method = buffer.readUInt16LE(offset + 10);
@@ -113,8 +114,11 @@ function readZipEntries(buffer: Buffer, wanted: (name: string) => boolean): stri
     try {
       // 0 = stored, 8 = deflate. ZIP holds raw deflate without a zlib header,
       // so inflateRaw is the right call here, not unzip.
-      if (method === 0) results.push(data.toString('utf8'));
-      else if (method === 8) results.push(inflateRawSync(data).toString('utf8'));
+      const content = method === 0 ? data : method === 8 ? inflateRawSync(data, { maxOutputLength: ARCHIVE_LIMITS.maxEntryBytes }) : null;
+      if (!content || content.length > ARCHIVE_LIMITS.maxEntryBytes) continue;
+      if (total + content.length > ARCHIVE_LIMITS.maxTotalBytes) break;
+      total += content.length;
+      results.push(content.toString('utf8'));
     } catch {
       // Damaged entry - skip it, the rest of the document may still work.
     }
@@ -188,8 +192,9 @@ function readZipFiles(buffer: Buffer): ArchiveEntry[] {
     const data = buffer.subarray(dataStart, dataStart + compressedSize);
 
     try {
-      const content = method === 0 ? data : method === 8 ? inflateRawSync(data) : null;
-      if (!content) continue;
+      const content = method === 0 ? data : method === 8 ? inflateRawSync(data, { maxOutputLength: ARCHIVE_LIMITS.maxEntryBytes }) : null;
+      if (!content || content.length > ARCHIVE_LIMITS.maxEntryBytes) continue;
+      if (total + content.length > ARCHIVE_LIMITS.maxTotalBytes) break;
       total += content.length;
       entries.push({ name, content });
     } catch {

@@ -1,3 +1,5 @@
+> **Private Fastmail fork:** See [security review](SECURITY-REVIEW.md) and [deployment guide](DEPLOYMENT.md). This fork restricts external integrations and uses the reviewed pnpm server build; upstream instructions below describe the original application.
+
 <div align="center">
 
 <img src="assets/icon.svg" width="96" height="96" alt="AmberChest logo">

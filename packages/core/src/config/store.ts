@@ -1,3 +1,4 @@
+import { assertPrivateAccount, assertPrivateSettings } from '../privacy.js';
 import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
@@ -201,6 +202,8 @@ export class ConfigStore {
     const parsed = appConfigSchema.parse(decryptJson<unknown>(envelope, key));
     this.key = key;
     this.salt = salt;
+    assertPrivateSettings(parsed.settings);
+    parsed.accounts.forEach(assertPrivateAccount);
     this.config = parsed as AppConfig;
   }
 
@@ -231,7 +234,9 @@ export class ConfigStore {
 
   async updateSettings(patch: Partial<AppSettings>): Promise<AppSettings> {
     const config = this.require();
-    config.settings = { ...config.settings, ...patch };
+    const nextSettings = { ...config.settings, ...patch };
+    assertPrivateSettings(nextSettings);
+    config.settings = nextSettings;
     await this.persist();
     return { ...config.settings };
   }
@@ -272,6 +277,7 @@ export class ConfigStore {
       createdAt: now,
       updatedAt: now,
     };
+    assertPrivateAccount(account);
     config.accounts.push(account);
     await this.persist();
     return { ...account };
@@ -282,6 +288,7 @@ export class ConfigStore {
     const account = config.accounts.find((candidate) => candidate.id === id);
     if (!account) throw new Error(`Unknown account ${id}`);
 
+    assertPrivateAccount({ ...account, ...input, settings: { ...account.settings, ...input.settings } });
     if (input.name !== undefined) account.name = input.name;
     if (input.email !== undefined) account.email = input.email;
     if (input.host !== undefined) account.host = input.host;

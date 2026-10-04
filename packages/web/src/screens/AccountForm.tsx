@@ -13,7 +13,7 @@ const DEFAULT_SETTINGS: AccountSettingsValues = {
   sinceDate: null,
   deletedHandling: 'move-to-deleted',
   deletedRetentionDays: null,
-  autoSelectNewFolders: false,
+  autoSelectNewFolders: true,
   ownAddresses: [],
   linkDuplicates: false,
   protectBeforeDate: null,
@@ -36,15 +36,15 @@ export function AccountForm({
   const account = existing?.account;
 
   const [values, setValues] = useState<AccountFormValues>(() => ({
-    name: account?.name ?? '',
+    name: account?.name ?? 'Fastmail',
     email: account?.email ?? '',
-    host: account?.host ?? '',
+    host: account?.host ?? 'imap.fastmail.com',
     port: account?.port ?? 993,
     security: account?.security ?? 'tls',
     rejectUnauthorized: account?.rejectUnauthorized ?? true,
     username: account?.username ?? '',
     password: '',
-    archivePath: account?.archivePath ?? null,
+    archivePath: account?.archivePath ?? '/archive',
   }));
   const [settings, setSettings] = useState<AccountSettingsValues>({
     ...DEFAULT_SETTINGS,
@@ -154,13 +154,13 @@ export function AccountForm({
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto]">
           <Field label={t('account.host')}>
-            <Input value={values.host} onChange={(event) => patch({ host: event.target.value })} />
+            <Input readOnly value={values.host} onChange={(event) => patch({ host: event.target.value })} />
           </Field>
           <Field label={t('account.port')}>
             <Input
               type="number"
               className="sm:w-28"
-              value={values.port}
+              readOnly value={values.port}
               onChange={(event) => patch({ port: Number(event.target.value) })}
             />
           </Field>
@@ -168,7 +168,7 @@ export function AccountForm({
 
         <Field label={t('account.security')}>
           <Select
-            value={values.security}
+            disabled value={values.security}
             onChange={(event) => onSecurityChange(event.target.value as AccountFormValues['security'])}
           >
             <option value="tls">{t('account.securityTls')}</option>
@@ -195,7 +195,7 @@ export function AccountForm({
 
         <Field label={t('account.authType')} hint={t('account.authTypeHint')}>
           <Select
-            value={authType}
+            disabled value={authType}
             onChange={(event) => setAuthType(event.target.value as 'password' | 'oauth')}
           >
             <option value="password">{t('account.authPassword')}</option>
@@ -222,7 +222,7 @@ export function AccountForm({
 
         <Toggle
           checked={values.rejectUnauthorized}
-          onChange={(rejectUnauthorized) => patch({ rejectUnauthorized })}
+          onChange={() => undefined}
           label={t('account.rejectUnauthorized')}
           hint={t('account.rejectUnauthorizedHint')}
         />
@@ -257,7 +257,7 @@ export function AccountForm({
           <div className="animate-fade-up flex flex-col gap-4 rounded-2xl border p-4" style={{ background: 'var(--surface-2)' }}>
             <Field label={t('account.archivePath')} hint={t('account.archivePathHint')}>
               <Input
-                value={values.archivePath ?? ''}
+                readOnly value={values.archivePath ?? ''}
                 onChange={(event) => patch({ archivePath: event.target.value || null })}
               />
             </Field>

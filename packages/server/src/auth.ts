@@ -11,13 +11,13 @@ export type AuthMode = 'none' | 'token' | 'password';
  * password from `AMBERCHEST_UI_PASSWORD` and issues session tokens.
  */
 export class AuthGuard {
-  private readonly sessions = new Set<string>();
+  private readonly sessions = new Map<string, number>();
 
   constructor(
     readonly mode: AuthMode,
     private readonly secret: string | null,
   ) {
-    if (mode === 'token' && secret) this.sessions.add(secret);
+    if (mode === 'token' && secret) this.sessions.set(secret, Infinity);
   }
 
   static fromEnvironment(env: NodeJS.ProcessEnv = process.env): AuthGuard {
@@ -41,7 +41,9 @@ export class AuthGuard {
     const expected = Buffer.from(this.secret, 'utf8');
     if (given.length !== expected.length || !timingSafeEqual(given, expected)) return null;
     const token = randomBytes(24).toString('base64url');
-    this.sessions.add(token);
+    for (const [old, until] of this.sessions) if (until <= Date.now()) this.sessions.delete(old);
+    if (this.sessions.size >= 100) this.sessions.delete(this.sessions.keys().next().value!);
+    this.sessions.set(token, Date.now() + 12 * 60 * 60 * 1000);
     return token;
   }
 
@@ -52,7 +54,9 @@ export class AuthGuard {
   isValid(token: string | null | undefined): boolean {
     if (this.mode === 'none') return true;
     if (!token) return false;
-    return this.sessions.has(token);
+    const until = this.sessions.get(token);
+    if (until === undefined || until <= Date.now()) { this.sessions.delete(token); return false; }
+    return true;
   }
 
   /** Reads the token from the Authorization header or the query string. */
@@ -60,6 +64,8 @@ export class AuthGuard {
     const header = request.headers.authorization;
     if (header?.startsWith('Bearer ')) return header.slice(7);
     const query = request.query as Record<string, string> | undefined;
-    return query?.token ?? null;
+    const path = request.url.split('?')[0] ?? '';
+    const download = /\/(raw|attachments|pdf|download)(\/|$)/.test(path);
+    return request.method === 'GET' && (path === '/api/events' || download) ? query?.token ?? null : null;
   }
 }

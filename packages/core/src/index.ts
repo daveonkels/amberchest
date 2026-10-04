@@ -201,4 +201,5 @@ export {
   sanitizeSegment,
   uniqueFileName,
 } from './util/paths.js';
+export { privateBackup, assertFastmail, assertPrivateSettings, assertPrivateAccount } from './privacy.js';
 export { messageFingerprint, sha256 } from './util/hash.js';

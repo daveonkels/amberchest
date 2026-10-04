@@ -1,3 +1,4 @@
+import { selectionForSync } from './folders.js';
 import { createHash, randomUUID } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import { join, relative } from 'node:path';
@@ -176,6 +177,8 @@ export class SyncEngine extends EventEmitter {
     const selectable = remoteFolders.filter((folder) => !folder.noSelect);
     const remoteByPath = new Map(selectable.map((folder) => [folder.path, folder]));
 
+    const selectedPaths = selectionForSync(this.account, this.db.listFolders(this.account.id), remoteFolders);
+
     // Refresh the folder table and take care of folders that disappeared.
     for (const folder of selectable) {
       this.db.upsertFolder(
@@ -186,7 +189,6 @@ export class SyncEngine extends EventEmitter {
     }
     await this.handleVanishedFolders(remoteByPath);
 
-    const selectedPaths = this.account.selectedFolders.filter((path) => remoteByPath.has(path));
     this.db.setSelectedFolders(this.account.id, selectedPaths);
     this.stats.foldersTotal = selectedPaths.length;
 

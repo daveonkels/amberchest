@@ -197,7 +197,7 @@ export const notificationSettingsSchema = z.object({
 
 export const appSettingsSchema = z.object({
   archivePath: z.string().min(1).default(defaultArchiveDir()),
-  language: z.enum(['de', 'en']).default('de'),
+  language: z.enum(['de', 'en']).default('en'),
   theme: z.enum(['light', 'dark', 'system']).default('system'),
   accentColor: z.string().default('violet'),
   search: searchSettingsSchema.default(() => searchSettingsSchema.parse({})),

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import {
@@ -21,6 +22,14 @@ import { startServer } from './index.js';
  */
 async function main(): Promise<void> {
   // Both of these run before anything reads a variable or opens a file.
+  process.umask(0o077);
+  for (const key of ['AMBERCHEST_MASTER_PASSWORD', 'AMBERCHEST_UI_PASSWORD']) {
+    const file = process.env[`${key}_FILE`];
+    if (file) process.env[key] = readFileSync(file, 'utf8').trim();
+  }
+  if (process.env.AMBERCHEST_PRIVATE_BACKUP === 'true' && !process.env.AMBERCHEST_UI_PASSWORD) {
+    throw new Error('Private backup requires a UI password');
+  }
   applyLegacyEnv();
   migrateLegacyConfigDir();
 

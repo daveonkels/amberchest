@@ -33,7 +33,7 @@ export function buildFolderTree({ account, db, remoteFolders }: FolderTreeOption
   const firstRun = knownFolders.length === 0;
 
   const selection = account.selectedFolders.length > 0
-    ? new Set(account.selectedFolders)
+    ? new Set(selectionForSync(account, knownFolders, remoteFolders))
     : new Set(suggestSelection(remoteFolders));
 
   const nodes = new Map<string, FolderTreeNode>();
@@ -75,4 +75,16 @@ export function collectSelected(nodes: FolderTreeNode[]): string[] {
   };
   walk(nodes);
   return result;
+}
+
+/** Persist auto-selected folders in the index, while respecting explicit deselections. */
+export function selectionForSync(account: Pick<Account, 'selectedFolders' | 'settings'>, known: Array<{path: string; selected: number}>, remote: RemoteFolder[]): string[] {
+  const available = remote.filter((folder) => !folder.noSelect);
+  const knownPaths = new Set(known.map((folder) => folder.path));
+  const selected = new Set(account.selectedFolders);
+  if (account.settings.autoSelectNewFolders) {
+    for (const folder of known) if (folder.selected) selected.add(folder.path);
+    for (const folder of available) if (!knownPaths.has(folder.path)) selected.add(folder.path);
+  }
+  return available.filter((folder) => selected.has(folder.path)).map((folder) => folder.path);
 }

@@ -1,0 +1,79 @@
+services:
+  amberchest:
+    image: ${AMBERCHEST_IMAGE:?Required reviewed image tag}
+    container_name: amberchest
+    user: '3000:3000'
+    restart: on-failure:5
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 2g
+    pids_limit: 128
+    tmpfs: ['/tmp:rw,noexec,nosuid,size=256m,uid=3000,gid=3000,mode=1700']
+    networks:
+      private:
+        ipv4_address: 172.30.84.2
+    extra_hosts:
+      - 'imap.fastmail.com:172.30.84.3'
+    dns: [127.0.0.1]
+    volumes:
+      - type: bind
+        source: ${AMBERCHEST_DATA:?Required config directory}
+        target: /config
+        bind: {create_host_path: false}
+      - type: bind
+        source: ${AMBERCHEST_ARCHIVE_PATH:?Required verified NAS directory}
+        target: /archive
+        bind: {create_host_path: false}
+      - type: bind
+        source: ${AMBERCHEST_SECRETS:?Required secrets directory}
+        target: /run/secrets
+        read_only: true
+        bind: {create_host_path: false}
+    environment:
+      TZ: America/Chicago
+      AMBERCHEST_PUBLIC_ORIGIN: ${AMBERCHEST_ORIGIN:?Required HTTPS origin}
+      AMBERCHEST_MASTER_PASSWORD_FILE: /run/secrets/master-password
+      AMBERCHEST_UI_PASSWORD_FILE: /run/secrets/ui-password
+      AMBERCHEST_CRON: '17 * * * *'
+    labels:
+      traefik.enable: 'true'
+      traefik.docker.network: amberchest-private
+      traefik.http.routers.amberchest.rule: Host(`${AMBERCHEST_HOSTNAME:?Required hostname}`)
+      traefik.http.routers.amberchest.entrypoints: https
+      traefik.http.routers.amberchest.tls: 'true'
+      traefik.http.routers.amberchest.tls.certresolver: cloudflare
+      traefik.http.services.amberchest.loadbalancer.server.port: '8484'
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
+  imap-relay:
+    image: ${NODE_IMAGE:?Required pinned node image digest}
+    container_name: amberchest-imap-relay
+    user: '3000:3000'
+    restart: on-failure:5
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 96m
+    pids_limit: 32
+    volumes:
+      - ./imap-relay.mjs:/relay.mjs:ro
+    environment:
+      RELAY_BIND: 172.30.84.3
+    command: [node, /relay.mjs]
+    networks:
+      private:
+        ipv4_address: 172.30.84.3
+      egress: {}
+networks:
+  private:
+    name: amberchest-private
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.30.84.0/29
+  egress:
+    name: amberchest-relay-egress

@@ -16,16 +16,16 @@
     "packages/desktop"
   ],
   "scripts": {
-    "build": "npm run build --workspace @amberchest/core && npm run build --workspace @amberchest/server && npm run build --workspace @amberchest/web",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
-    "dev": "npm run dev --workspace @amberchest/desktop",
-    "dev:server": "npm run dev --workspace @amberchest/server",
-    "dev:web": "npm run dev --workspace @amberchest/web",
-    "dist:mac": "npm run build && npm run dist --workspace @amberchest/desktop"
+    "build": "pnpm --filter @amberchest/core build && pnpm --filter @amberchest/server build && pnpm --filter @amberchest/web build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r --if-present test",
+    "dev": "pnpm --filter @amberchest/web dev",
+    "dev:server": "pnpm --filter @amberchest/server dev",
+    "dev:web": "pnpm --filter @amberchest/web dev"
   },
   "devDependencies": {
     "typescript": "^7.0.2",
     "vitest": "^4.1.11"
-  }
+  },
+  "packageManager": "pnpm@11.19.0"
 }

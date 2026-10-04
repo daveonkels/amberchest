@@ -1,4 +1,5 @@
 import {
+  privateBackup,
   handleRawMessage,
   accountInputSchema,
   accountSettingsSchema,
@@ -125,6 +126,7 @@ const searchQuerySchema = z.object({
 
 export async function registerRoutes(server: FastifyInstance, options: RouteOptions): Promise<void> {
   const { app, auth } = options;
+  const escapeHtml = (value: string): string => value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
   /** Every /api route except the public ones needs a valid token. */
   const PUBLIC_PATHS = new Set([
@@ -205,8 +207,9 @@ export async function registerRoutes(server: FastifyInstance, options: RouteOpti
     }
   });
 
-  server.post('/api/lock', async () => {
-    app.lock();
+  server.post('/api/lock', async (request) => {
+    if (privateBackup()) auth.logout(auth.tokenFromRequest(request) ?? '');
+    else app.lock();
     return { ok: true };
   });
 
@@ -579,7 +582,7 @@ export async function registerRoutes(server: FastifyInstance, options: RouteOpti
           '<style>body{font-family:system-ui,sans-serif;background:#0d0f14;color:#e8eaf0;' +
           'display:grid;place-items:center;height:100vh;margin:0}div{max-width:32rem;text-align:center}' +
           'h1{font-size:1.25rem}p{color:#9aa2b5}</style>' +
-          `<div><h1>${title}</h1><p>${message}</p></div>`,
+          `<div><h1>${escapeHtml(title)}</h1><p>${escapeHtml(message)}</p></div>`,
       );
     };
 
@@ -1122,6 +1125,7 @@ export async function registerRoutes(server: FastifyInstance, options: RouteOpti
     }
 
     const send = (type: string, payload: unknown): void => {
+      if (!auth.isValid(auth.tokenFromRequest(request))) { socket.close(4401, 'Session expired'); return; }
       if (socket.readyState === socket.OPEN) socket.send(JSON.stringify({ type, payload }));
     };
 

@@ -25,7 +25,7 @@ type Mode = 'html' | 'text';
  * image. Remote content is only reachable after the user asks for it.
  */
 function buildDocument(html: string, allowRemote: boolean, dark: boolean): string {
-  const imgSources = allowRemote ? "data: https: http:" : 'data:';
+  const imgSources = 'data:';
   const csp = [
     "default-src 'none'",
     `img-src ${imgSources}`,
@@ -188,12 +188,7 @@ export function MessageView({
               </Button>
             </a>
 
-            <a href={downloadUrl(`/accounts/${accountId}/messages/${messageId}/pdf`)} download>
-              <Button>
-                <FileText size={15} />
-                {t('export.asPdf')}
-              </Button>
-            </a>
+
 
             {isDesktop && (
               <Button onClick={() => void openExternally()} title={t('message.openHint')}>
@@ -203,7 +198,7 @@ export function MessageView({
             )}
 
             {message.hasRemoteContent && !allowRemote && mode === 'html' && (
-              <Button onClick={() => setAllowRemote(true)} title={t('message.remoteWarning')}>
+              <Button disabled title="External images are disabled in this private archive">
                 <Eye size={15} />
                 {t('message.loadRemote')}
               </Button>

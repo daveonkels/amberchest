@@ -22,6 +22,7 @@ export class Scheduler extends EventEmitter {
   private readonly fields: CronFields;
   private lastFired: string | null = null;
   private running = false;
+  private initialTimer: NodeJS.Timeout | null = null;
 
   constructor(private readonly options: SchedulerOptions) {
     super();
@@ -33,7 +34,7 @@ export class Scheduler extends EventEmitter {
   }
 
   start(): void {
-    if (this.timer) return;
+    if (this.timer || this.initialTimer) return;
     const next = this.nextRun;
     logger.info(
       `Scheduler active: ${this.options.expression}${next ? `, next run ${next.toISOString()}` : ''}`,
@@ -41,13 +42,16 @@ export class Scheduler extends EventEmitter {
 
     // Align to the start of the next minute, then tick every minute.
     const msToNextMinute = 60_000 - (Date.now() % 60_000);
-    setTimeout(() => {
+    this.initialTimer = setTimeout(() => {
+      this.initialTimer = null;
       void this.tick();
       this.timer = setInterval(() => void this.tick(), 60_000);
     }, msToNextMinute);
   }
 
   stop(): void {
+    if (this.initialTimer) clearTimeout(this.initialTimer);
+    this.initialTimer = null;
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
   }
@@ -70,7 +74,7 @@ export class Scheduler extends EventEmitter {
     try {
       for (const overview of this.options.app.overview()) {
         const account = overview.account;
-        if (account.selectedFolders.length === 0) {
+        if (account.selectedFolders.length === 0 && !account.settings.autoSelectNewFolders) {
           logger.info(`Skipping ${account.name}: no folders selected`);
           continue;
         }

@@ -197,7 +197,7 @@ function readInitialToken(): string | null {
 /** True when the UI is hosted by the Electron shell (window controls overlap). */
 export const isDesktop = new URLSearchParams(window.location.search).has('desktop');
 
-let connection: Connection = getActiveConnection();
+let connection: Connection = LOCAL_CONNECTION;
 let token: string | null =
   connection.id === LOCAL_CONNECTION.id ? readInitialToken() : getConnectionToken(connection.id);
 
@@ -208,6 +208,7 @@ export function getConnection(): Connection {
 
 /** Switches the target; the caller reloads the state afterwards. */
 export function useConnection(next: Connection): void {
+  if (next.id !== LOCAL_CONNECTION.id) throw new Error('Remote connections are disabled');
   connection = next;
   setActiveConnectionId(next.id);
   token =

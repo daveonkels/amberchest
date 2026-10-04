@@ -156,7 +156,7 @@ export function Settings(): ReactNode {
       <Card className="flex flex-col gap-4">
         <Field label={t('settings.archivePath')} hint={t('settings.archivePathHint')}>
           <Input
-            value={values.archivePath}
+            readOnly value={values.archivePath}
             onChange={(event) => void update({ archivePath: event.target.value }, false)}
           />
         </Field>
@@ -382,20 +382,11 @@ export function Settings(): ReactNode {
         </div>
       </Card>
 
-      <NotificationSettings
-        notifications={values.notifications}
-        storage={values.storage}
-        space={space}
-        onChange={(part) => void update(part, true)}
-      />
 
-      <OAuthSettings
-        settings={values.oauth}
-        callbackUrl={`${window.location.origin}${window.location.pathname.replace(/\/$/, '')}/api/oauth/callback`}
-        onChange={(oauth) => void update({ oauth } as SettingsPatch, true)}
-      />
 
-      <UpdateCard />
+      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+        Private Fastmail backup. External integrations and update checks are disabled.
+      </p>
 
       <Card className="flex gap-3">
         <span

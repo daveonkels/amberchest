@@ -135,7 +135,7 @@ export function App(): ReactNode {
           </button>
 
           <nav className="ml-auto flex gap-1 md:ml-0 md:flex-col">
-            {items.map((item) => (
+            {items.filter((item) => !['mcp', 'homeassistant'].includes(item.id)).map((item) => (
               <button
                 key={item.id}
                 type="button"
@@ -163,7 +163,7 @@ export function App(): ReactNode {
 
           <div className="flex items-center gap-1 md:mt-auto md:flex-col md:items-stretch">
             <SupportLinks />
-            <ConnectionSwitcher />
+
             <Button variant="ghost" onClick={() => void lock()} className="w-full justify-start">
               <Lock size={15} />
               <span className="hidden md:inline">{t('nav.lock')}</span>

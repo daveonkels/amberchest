@@ -42,6 +42,8 @@ services:
       traefik.docker.network: amberchest-private
       traefik.http.routers.amberchest.rule: Host(`${AMBERCHEST_HOSTNAME:?Required hostname}`)
       traefik.http.routers.amberchest.entrypoints: https
+      traefik.http.routers.amberchest.middlewares: amberchest-tailnet
+      traefik.http.middlewares.amberchest-tailnet.ipallowlist.sourcerange: '100.64.0.0/10'
       traefik.http.routers.amberchest.tls: 'true'
       traefik.http.routers.amberchest.tls.certresolver: cloudflare
       traefik.http.services.amberchest.loadbalancer.server.port: '8484'
